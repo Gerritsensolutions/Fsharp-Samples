@@ -1,16 +1,9 @@
-﻿//================================================
-//Complete Koans and Submit as a HW (10pt in total)
-//There are 15 tests and 3 output prints from this example
-//Each worth 0.5 pt in HW
-//Submission is 1 pt in HW
-//Correct output:
-//T1...Test Success
-//...
-//T15...Test Success
-//The top of the current stack is 3.000000
-//The top of the current stack is 27.000000
-//The top of the current stack is 6.000000
-//================================================
+//==============================================
+// Program.fs
+// Author: Tyler Gerritsen
+// Version: 10-28-18
+// Simulates a simple calculator using a stack
+//==============================================
 
 let AssertEquality inputTuple =
   match inputTuple with
@@ -25,14 +18,10 @@ let AssertEquality inputTuple =
 // Define types
 // ==============================================
 
-//name a stack -- regular:
-//type Stacktest = float list
-
-//Comment out the regular def (line 16)
-//name a stack -- better:
+//name a stack
 type Stack = StackContents of float list
 
-//### now test your code
+//### now test the code
 let testStack1=StackContents [1.0;2.0;3.0]
 let (StackContents contents)=testStack1 //get the content from a stack using pattern matching
 printf "T1..."
@@ -42,31 +31,18 @@ AssertEquality (contents, [1.0;2.0;3.0])
 // Stack primitives -- push pop
 // ==============================================
 
-//Push a value on the stack -- regular
-//let push x aStack =  
- //let (StackContents contents) = aStack
- //let newContents = x::contents
- //StackContents newContents
-//list is immutable so you always add element to the head and return a new list
-(*
-//Comment out the regular def
-*)
-// Push a value on the stack -- better
-//(StackContents contents) is a Stack var being passed over as func input (aStack in the regular version).
-//The pattern matching line "let (...)=aStack" is condensed and happens at the input variable line
+// Push a value on the stack
+//(StackContents contents) is a Stack var being passed over as func input
 let push x (StackContents contents) =  
    StackContents (x::contents)
 
-//### now test your code
+//### test the code
 let emptyStack = StackContents []
 let stackWith1test = push 1.0 emptyStack
 let stackWith2test = push 2.0 stackWith1test
 printf "T2..."
 AssertEquality (stackWith2test, StackContents [2.0;1.0])
 
-
-//If you remember, in F#, we can pass over only 1 var and have a partial func as the return value
-//like giving y=5 in f(x,y)=x+y returns function: f(x,5)=x+5
 //push takes x and a stack as input variables. We can give x as input var only and have f (defined-x, stack) as return value
 let ONE = push 1.0
 let TWO = push 2.0
@@ -75,15 +51,17 @@ let FOUR = push 4.0
 let FIVE = push 5.0
 let EMPTY = StackContents []
 
-//### now test your code
+//### test the code
 let stackWith1 = ONE EMPTY
 let stackWith2 = TWO stackWith1
 let stackWith3  = THREE stackWith2
-//You might also remember that those partially defined functions are very useful when building pipes to make your code very concise and easy to read:
+
+// some concise pipelining tests:
 let result123 = EMPTY |> ONE |> TWO |> THREE
 printf "T3..."
 AssertEquality (stackWith3, result123)
-//you can also do:
+
+// testing again:
 let result312 = EMPTY |> THREE |> ONE |> TWO
 printf "T4..."
 AssertEquality (result312,StackContents [2.0;1.0;3.0])
@@ -98,7 +76,7 @@ let pop (StackContents contents) =
    |[] ->
        failwith "Stack underflow"
 
-//### now test your code
+//### testing code
 let initialStack = EMPTY  |> ONE |> TWO
 let popped1, poppedStack = pop initialStack
 let popped2, poppedStack2 = pop poppedStack
@@ -120,24 +98,24 @@ let ADDtest stack =
  let result = x+y   //do the math
  push result s2       //push back on the doubly-popped stack
 
-//###test your code
+//###test the code
 let add12=ADDtest initialStack //list is immutable, so the initialStack is always [2.0;1.0]
 printf "T8..."
 AssertEquality (add12, StackContents [3.0])
 
-//Similarly, we can define MUL
+// define MUL
 let MULtest stack =
  let x,s = pop stack //pop the top of the stack
  let y,s2 = pop s     //pop the result stack
  let result = x*y   //do the math
  push result s2      //push back on the doubly-popped stack
 
-//###test your code
-let mul12=MULtest initialStack //list is immutable, so the initialStack is always [2.0;1.0]
+//###test the code
+let mul12=MULtest initialStack
 printf "T9..."
 AssertEquality (mul12, StackContents [2.0])
 
-//Now, you can see that ADD and MUL are super similar since they both use 2 numbers for calc
+//ADD and MUL are super similar since they both use 2 numbers for calc
 //We can merge ADD and MUL together to make the code even more concise.
 //Define a generic binary math operator:
 // pop the top two elements
@@ -151,15 +129,13 @@ let binary mathFn stack =
 
 //If we want to do add using this generic binary math func:
 let genericBinaryMath12=binary (+) initialStack //This is same to: let ADD aStack = binary (fun x y -> x + y) aStack
-//By using partical func, we have a new way of defining ADD and more:
+//By using partial func, we have a new way of defining ADD and more:
 let ADD = binary (+)
 let SUB = binary (-)
 let MUL = binary (*)
 let DIV = binary (/)
-//It is an amazingly concise and clear way of defining multiple similar functions sharing the same base func
-//Does this sounds like class inherantance to you? Yes, but in a more concise way!
 
-//###Now test your code:
+//###Testing code:
 let div3by2 = EMPTY|> THREE|> TWO|> DIV
 let sub2from5 = EMPTY|> FIVE|> TWO|> SUB
 let sub2from5thenadd1 = EMPTY|> FIVE|> TWO|> SUB|> ONE|> ADD
@@ -171,7 +147,7 @@ AssertEquality(sub2from5, StackContents [3.0])
 printf "T12..."
 AssertEquality(sub2from5thenadd1, StackContents [4.0])
 
-//Similar to the binary operators, we can define the generic unary operator for things like power **
+// define a generic unary operator for power **
 // pop the top element
 // do a unary operation on it
 // push the result
@@ -183,7 +159,7 @@ let unary f stack =
 let NEG = unary (fun x -> -x)
 let SQUARE = unary (fun x -> x**2.0)
 
-//###Now test your code:
+//###Now test the code:
 let neg3 = EMPTY  |> THREE|> NEG
 let square2 = EMPTY|> TWO|> SQUARE
 let squareneg3= EMPTY|> THREE|> NEG|> SQUARE
@@ -232,14 +208,10 @@ let SUM_NUMBERS_UPTO =
    >> MUL                 // n(n+1)
    >> TWO >> DIV   // n(n+1) / 2
 
-
-//Can you see how easy it is to build new functions from already defined functions? The code also looks very clearn and easy to read
-
-//###now test your code
+//### One final test of the calculator
 let myStack= EMPTY |> ONE |> TWO |> THREE
 let stackTop= myStack |> SHOW
 let stackTopEleCubed = myStack |> CUBE |> SHOW
 let stackSum=myStack |> SUM_NUMBERS_UPTO |> SHOW
 
-//Referenced F# for fun and profit
 System.Console.ReadKey() |> ignore
